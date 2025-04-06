@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web3 Clicker Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f0f0;
+            padding: 20px;
+        }
+        .btn {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            margin: 10px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 18px;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        #balance {
+            font-size: 24px;
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome to Web3 Clicker Game!</h1>
+    <p>Click the button to earn TTC tokens!</p>
+    <button class="btn" id="clickBtn">Click to Earn 0.1 TTC</button>
+    
+    <div id="balance">
+        <p>Your Current Balance: <span id="ttcBalance">0.0</span> TTC</p>
+    </div>
+
+    <button class="btn" id="withdrawBtn">Withdraw TTC</button>
+
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.5.0/dist/web3.min.js"></script>
+    <script>
+        let web3 = new Web3(Web3.givenProvider || "http://localhost:8545");  // Connect to MetaMask provider
+        let contractAddress = "0x048dff17B55aD79A681E606b6F268db508250a28";  // Replace with your contract address
+        let abi = [
+            {
+                "constant": true,
+                "inputs": [{"name": "", "type": "address"}],
+                "name": "balanceOf",
+                "outputs": [{"name": "", "type": "uint256"}],
+                "payable": false,
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [{"name": "_to", "type": "address"}, {"name": "_value", "type": "uint256"}],
+                "name": "transfer",
+                "outputs": [{"name": "", "type": "bool"}],
+                "payable": false,
+                "stateMutability": "nonpayable",
+                "type": "function"
+            }
+        ];
+
+        let myTokenContract = new web3.eth.Contract(abi, contractAddress);
+        let balanceKey = "userTTCBalance";  // Key to store balance in localStorage
+
+        // Initialize or retrieve the saved balance from localStorage
+        function getBalance() {
+            let storedBalance = localStorage.getItem(balanceKey);
+            if (!storedBalance) {
+                storedBalance = 0.0;
+                localStorage.setItem(balanceKey, storedBalance);
+            }
+            document.getElementById("ttcBalance").textContent = storedBalance;
+        }
+
+        // Update the balance in localStorage
+        function updateBalance(amount) {
+            let currentBalance = parseFloat(localStorage.getItem(balanceKey)) || 0.0;
+            currentBalance += amount;
+            localStorage.setItem(balanceKey, currentBalance);
+            getBalance();  // Refresh displayed balance
+        }
+
+        // Handle the "Click to Earn" button
+        document.getElementById("clickBtn").addEventListener("click", function() {
+            updateBalance(0.1);  // Add 0.1 TTC on each click
+        });
+
+        // Handle the "Withdraw" button
+        async function withdrawTokens() {
+            let amount = localStorage.getItem(balanceKey);  // Get the current balance
+            if (parseFloat(amount) <= 0) {
+                alert("You need to accumulate some TTC before you can withdraw!");
+                return;
+            }
+
+            let accounts = await web3.eth.getAccounts();  // Get the user's account from MetaMask
+            let amountInWei = web3.utils.toWei(amount.toString(), 'ether');  // Convert to Wei (1 token = 1 ether in this example)
+
+            try {
+                // Sending tokens to the MetaMask address (or another address)
+                await myTokenContract.methods.transfer(accounts[0], amountInWei).send({ from: accounts[0] });
+                alert("Withdrawal successful!");
+                // Reset the local balance after successful withdrawal
+                localStorage.setItem(balanceKey, 0.0);
+                getBalance();  // Refresh displayed balance
+            } catch (error) {
+                console.error(error);
+                alert("Error during withdrawal.");
+            }
+        }
+
+        // Handle Withdraw button click
+        document.getElementById("withdrawBtn").addEventListener("click", withdrawTokens);
+
+        // Call getBalance on page load
+        window.onload = getBalance;
+    </script>
+</body>
+</html>

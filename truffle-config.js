@@ -4,17 +4,18 @@ dotenv.config();
 
 module.exports = {
   networks: {
-    sepolia: {
-      provider: () => new HDWalletProvider(process.env.MNEMONIC, `https://sepolia.infura.io/v3/${process.env.INFURA_PROJECT_ID}`),
-      network_id: 11155111,  // Sepolia network ID
-      gas: 5500000,          // Gas limit
-      gasPrice: 10000000000, // Gas price (10 gwei, adjust if needed)
+    development: {
+      host: "127.0.0.1",      // Localhost (default for Ganache)
+      port: 8545,             // Port for Ganache (default is 8545)
+      network_id: "*",        // Match any network id (works for Ganache)
+      gas: 6721975,           // Gas limit (default for Ganache)
+      gasPrice: 2000000000,   // Gas price (1 Gwei)
     },
   },
 
   compilers: {
     solc: {
-      version: "^0.8.0", // Solidity version
+      version: "0.8.17",  // Specify the Solidity version you want to use
     },
   },
 };
